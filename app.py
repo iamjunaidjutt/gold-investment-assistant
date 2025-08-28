@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 # API Keys & Gemini via OpenAI Endpoint Configuration
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip("\"'\r\n\t ")
 GEMINI_API_KEY = (os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY", "")).strip("\"'\r\n\t ")
+METAL_PRICE_API = os.getenv("METAL_PRICE_API", "").strip("\"'\r\n\t ")
 OPENAI_BASE_URL = os.getenv(
     "OPENAI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/"
 ).strip()
@@ -48,16 +49,42 @@ PURITY_FACTORS = {
 
 def fetch_live_gold_price() -> Tuple[float, str]:
     """Fetch live spot gold price in USD or fall back gracefully."""
+    # 1. Try with user METAL_PRICE_API on metals.dev
+    if METAL_PRICE_API:
+        try:
+            url = f"https://api.metals.dev/v1/latest?api_key={METAL_PRICE_API}&currency=USD&unit=toz"
+            resp = requests.get(url, timeout=4)
+            if resp.status_code == 200:
+                data = resp.json()
+                rate = data.get("metals", {}).get("gold")
+                if rate and isinstance(rate, (int, float)) and rate > 1000:
+                    return float(rate), "Live metals.dev API"
+        except Exception as e:
+            logger.warning(f"Could not fetch metals.dev rate: {e}")
+
+        # 2. Try GoldAPI if metals.dev fails
+        try:
+            headers = {"x-access-token": METAL_PRICE_API, "Content-Type": "application/json"}
+            resp = requests.get("https://www.goldapi.io/api/XAU/USD", headers=headers, timeout=4)
+            if resp.status_code == 200:
+                data = resp.json()
+                price = data.get("price")
+                if price and isinstance(price, (int, float)) and price > 1000:
+                    return float(price), "Live GoldAPI"
+        except Exception as e:
+            logger.warning(f"Could not fetch GoldAPI rate: {e}")
+
+    # 3. Public demo fallback
     try:
         url = "https://api.metals.dev/v1/latest?api_key=demo&currency=USD&unit=toz"
-        resp = requests.get(url, timeout=4)
+        resp = requests.get(url, timeout=3)
         if resp.status_code == 200:
             data = resp.json()
             rate = data.get("metals", {}).get("gold")
             if rate and isinstance(rate, (int, float)) and rate > 1000:
-                return float(rate), "Live API"
+                return float(rate), "Demo metals.dev API"
     except Exception as e:
-        logger.warning(f"Could not fetch live gold rate: {e}")
+        logger.warning(f"Could not fetch demo rate: {e}")
 
     return DEFAULT_GOLD_SPOT_USD, "Reference Benchmark"
 
