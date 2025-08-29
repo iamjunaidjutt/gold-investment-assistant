@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gold Investment Estimations Assistant</title>
+  <script type="module" crossorigin src="https://cdn.jsdelivr.net/npm/@gradio/lite/dist/lite.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gradio/lite/dist/lite.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0b0f17;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <gradio-lite>
+import gradio as gr
+import json
+
+# ============================================================================
+# Precious Metals Valuation Constants & Math Engine
+# ============================================================================
+DEFAULT_GOLD_SPOT_USD = 2750.00
+TROY_OUNCE_TO_GRAMS = 31.1034768
+TOLA_TO_GRAMS = 11.6638038
+
+PURITY_FACTORS = {
+    "24K (99.9% Pure)": 0.999,
+    "22K (91.6% Pure)": 0.916,
+    "18K (75.0% Pure)": 0.750,
+    "14K (58.3% Pure)": 0.583,
+}
+
+def calculate_valuation(weight, unit, karat, making_pct, tax_pct, custom_spot):
+    spot = float(custom_spot) if custom_spot and float(custom_spot) > 0 else DEFAULT_GOLD_SPOT_USD
+    w = float(weight or 10.0)
+
+    if unit == "Troy Ounces (oz)":
+        grams = w * TROY_OUNCE_TO_GRAMS
+    elif unit == "Tolas":
+        grams = w * TOLA_TO_GRAMS
+    else:
+        grams = w
+
+    purity = PURITY_FACTORS.get(karat, 0.999)
+    fine_gold_grams = grams * purity
+    base_gram_price_24k = spot / TROY_OUNCE_TO_GRAMS
+
+    metal_value = fine_gold_grams * base_gram_price_24k
+    making_charges = metal_value * (float(making_pct or 0.0) / 100.0)
+    tax_value = (metal_value + making_charges) * (float(tax_pct or 0.0) / 100.0)
+    total_cost = metal_value + making_charges + tax_value
+
+    return {
+        "spot": spot,
+        "input_weight": w,
+        "unit": unit,
+        "grams": round(grams, 3),
+        "fine_grams": round(fine_gold_grams, 3),
+        "karat": karat,
+        "purity_pct": round(purity * 100, 1),
+        "metal_val": round(metal_value, 2),
+        "making_val": round(making_charges, 2),
+        "tax_val": round(tax_value, 2),
+        "total_cost": round(total_cost, 2),
+    }
+
+def generate_advisory(val, user_q):
+    total_premium_pct = ((val["making_val"] + val["tax_val"]) / val["metal_val"] * 100) if val["metal_val"] > 0 else 0
+
+    # Premium analysis
+    if total_premium_pct < 8:
+        premium_eval = f"**Favorable ({total_premium_pct:.1f}% total premium)**: Excellent for investment bullion / minted bars. Low fabrication drag on capital."
+    elif total_premium_pct <= 16:
+        premium_eval = f"**Moderate ({total_premium_pct:.1f}% total premium)**: Typical for lightweight coins, branded sovereign bars, or simple ornaments."
+    else:
+        premium_eval = f"**High ({total_premium_pct:.1f}% total premium)**: Standard for handcrafted jewelry, but suboptimal for pure wealth preservation due to upfront fabrication loss upon liquidation."
+
+    # Strategy advice
+    if "24K" in val["karat"]:
+        strategy = "- **Bullion Recommendation:** 24K pure gold is universally recognized with the tightest bid-ask spread (typically 1–3% at bullion dealers). Ideal for long-term inflation hedging and central bank reserves style holding."
+    elif "22K" in val["karat"]:
+        strategy = "- **Jewelry & Sovereign Coin Hedge:** 22K offers high purity with increased durability for wearable wealth. In South Asian and Middle Eastern markets, 22K retains high liquidity, though jewelers deduct making charges upon buyback."
+    else:
+        strategy = "- **Ornamental Grade:** 18K/14K gold contains higher alloy content (copper/silver/zinc) for hardness. Liquidating these grades incurs a refinery refining fee and larger resale haircut."
+
+    query_note = f"\n> **User Query Focus:** *\"{user_q}\"*\n" if user_q.strip() else ""
+
+    advisory_md = f"""### 📊 Investment Assessment & Market Analysis
+{query_note}
+#### 1. Premium & Markup Assessment
+- {premium_eval}
+- **Raw Metal Net Worth:** `${val['metal_val']:,.2f}` | **Premium Overhead:** `${val['making_val'] + val['tax_val']:,.2f}`
+
+#### 2. Allocation & Liquidity Strategy
+{strategy}
+- **Physical Bullion vs Paper Gold:** If physical possession is required, allocate toward 1 oz or 100g minted bars with serial certificates. For trading/hedging without storage risk, gold ETFs (like GLD or IAU) offer lower expense ratios (0.25% - 0.40%/year) without making charge loss.
+- **Liquidity Expectation:** Expected liquidation recovery is approximately **${val['metal_val']:,.2f} USD** based on spot benchmarks, as secondary markets do not reimburse making charges or retail taxes.
+
+#### 3. Actionable Verdict
+{"✅ **Favorable Buy:** Premium structure aligns well with institutional precious metal guidelines." if total_premium_pct <= 12 else "⚠️ **Caution on Premium:** Negotiate fabrication charges down or shift toward raw investment bars if your primary objective is wealth preservation."}
+"""
+    return advisory_md
+
+def process_calculator(user_q, weight, unit, karat, making_pct, tax_pct, custom_spot):
+    val = calculate_valuation(weight, unit, karat, making_pct, tax_pct, custom_spot)
+
+    summary_md = f"""### 💰 Valuation Breakdown
+| Metric | Value |
+| :--- | :--- |
+| **Gross Weight** | **{val['grams']} g** ({val['input_weight']} {val['unit']}) |
+| **Purity Grade** | **{val['karat']}** ({val['purity_pct']}% fine gold) |
+| **Pure Gold Content** | **{val['fine_grams']} g** |
+| **Spot Benchmark** | **${val['spot']:,.2f} / troy oz** |
+| **Raw Metal Value** | **${val['metal_val']:,.2f}** |
+| **Making / Fabrication** | **${val['making_val']:,.2f}** |
+| **Estimated Tax / Duty** | **${val['tax_val']:,.2f}** |
+| **Total Estimated Price** | **${val['total_cost']:,.2f} USD** |
+"""
+    advisory_md = generate_advisory(val, user_q or "")
+    return summary_md, advisory_md
+
+# ============================================================================
+# UI Setup (Gradio-Lite Compatible)
+# ============================================================================
+CUSTOM_CSS = """
+.gradio-container {
+    max-width: 1050px !important;
+    margin: 0 auto !important;
+}
+.header-box {
+    text-align: center;
+    padding: 20px 14px;
+    background: linear-gradient(135deg, #0b0f17 0%, #171f2f 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(234, 179, 8, 0.35);
+    margin-bottom: 20px;
+}
+.header-box h1 {
+    color: #facc15;
+    margin: 0 0 6px 0;
+    font-size: 1.75rem;
+}
+"""
+
+with gr.Blocks(title="Gold Investment Estimations Assistant", css=CUSTOM_CSS) as demo:
+    with gr.Column(elem_classes=["header-box"]):
+        gr.Markdown(
+            """# 🪙 Gold Investment Estimations Assistant
+**Precious Metals Portfolio & Valuation Advisor**
+Powered by **Gradio-Lite (Client-Side Pyodide)** • Instant browser-native valuation calculations
+"""
+        )
+
+    with gr.Row():
+        with gr.Column(scale=1):
+            gr.Markdown("### ⚖️ 1. Holding Parameters")
+            weight_in = gr.Number(value=10.0, label="Weight", precision=2)
+            unit_in = gr.Radio(
+                choices=["Grams (g)", "Tolas", "Troy Ounces (oz)"],
+                value="Grams (g)",
+                label="Unit of Measurement",
+            )
+            karat_in = gr.Dropdown(
+                choices=list(PURITY_FACTORS.keys()),
+                value="24K (99.9% Pure)",
+                label="Karat / Purity Grade",
+            )
+
+            with gr.Accordion("Advanced Pricing Adjustments", open=False):
+                making_in = gr.Slider(
+                    minimum=0, maximum=30, value=3.0, step=0.5,
+                    label="Making / Fabrication Charges (%)",
+                )
+                tax_in = gr.Slider(
+                    minimum=0, maximum=20, value=0.0, step=0.5,
+                    label="Local Sales Tax / VAT (%)",
+                )
+                spot_in = gr.Number(
+                    value=DEFAULT_GOLD_SPOT_USD,
+                    label="Custom Spot Price ($/oz)",
+                )
+
+            query_in = gr.Textbox(
+                label="Investment Question or Custom Context",
+                placeholder="e.g. Evaluating 22K jewelry vs 24K bars for 5-year hedge",
+                lines=2,
+            )
+            calc_btn = gr.Button("Calculate Valuation & Advisory", variant="primary")
+
+        with gr.Column(scale=1):
+            gr.Markdown("### 📋 2. Results & Advisory")
+            summary_out = gr.Markdown()
+            advisory_out = gr.Markdown()
+
+    calc_btn.click(
+        fn=process_calculator,
+        inputs=[query_in, weight_in, unit_in, karat_in, making_in, tax_in, spot_in],
+        outputs=[summary_out, advisory_out],
+    )
+
+    gr.Markdown(
+        """---
+*Engineered by **Muhammad Junaid** ([@iamjunaidjutt](https://github.com/iamjunaidjutt)) • Deployed on Hugging Face Spaces & GitHub.*
+"""
+    )
+  </gradio-lite>
+</body>
+</html>

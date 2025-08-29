@@ -2,13 +2,11 @@
 title: Gold Investment Estimations Assistant
 emoji: 🪙
 colorFrom: yellow
-colorTo: amber
-sdk: gradio
-sdk_version: 4.44.0
-app_file: app.py
+colorTo: yellow
+sdk: static
 pinned: false
 license: mit
-short_description: Voice-enabled gold portfolio and valuation advisor powered by OpenAI SDK & Groq Whisper
+short_description: Gold portfolio and investment valuation advisor
 ---
 
 # Gold Investment Estimations Assistant
