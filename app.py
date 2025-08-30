@@ -400,7 +400,7 @@ Powered by **Google Gemini (via OpenAI Endpoint)** • **Groq Whisper (whisper-l
     gr.Markdown(
         """
 ---
-*Engineered by **Muhammad Junaid** ([@iamjunaidjutt](https://github.com/iamjunaidjutt)) • Built for fast precious metal estimations with speech-to-text and generative AI analysis.*
+*Created by **Muhammad Junaid** ([@iamjunaidjutt](https://github.com/iamjunaidjutt)) • Built for fast precious metal estimations with speech-to-text and generative AI analysis.*
 """
     )
 

@@ -116,4 +116,4 @@ Open your browser at `http://localhost:7860` to use the assistant.
 ## Author
 
 - **Muhammad Junaid** — [@iamjunaidjutt](https://github.com/iamjunaidjutt)
-- Portfolio: [iamjunaidjutt.com](https://iamjunaidjutt.com)
+- Portfolio: [iamjunaidjutt.vercel.app](https://iamjunaidjutt.vercel.app)
