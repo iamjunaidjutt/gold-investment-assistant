@@ -4,210 +4,754 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gold Investment Estimations Assistant</title>
-  <script type="module" crossorigin src="https://cdn.jsdelivr.net/npm/@gradio/lite/dist/lite.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gradio/lite/dist/lite.css" />
   <style>
-    body {
+    :root {
+      --bg: #0b0f17;
+      --surface: #121824;
+      --surface-border: rgba(234, 179, 8, 0.25);
+      --gold: #facc15;
+      --gold-hover: #eab308;
+      --gold-dim: rgba(250, 204, 21, 0.12);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-cyan: #00f0ff;
+      --card-bg: #161f30;
+      --card-border: #1e293b;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      background-color: #0b0f17;
-      color: #e2e8f0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font);
+      line-height: 1.5;
+      padding: 24px 16px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* Header Banner */
+    .header-box {
+      text-align: center;
+      padding: 28px 20px;
+      background: linear-gradient(135deg, #0e1524 0%, #172237 100%);
+      border-radius: 16px;
+      border: 1px solid var(--surface-border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 25px rgba(234, 179, 8, 0.1);
+      margin-bottom: 24px;
+    }
+
+    .header-box h1 {
+      color: var(--gold);
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      text-shadow: 0 0 20px rgba(250, 204, 21, 0.3);
+    }
+
+    .header-box p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .badges-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(250, 204, 21, 0.1);
+      color: var(--gold);
+      border: 1px solid rgba(250, 204, 21, 0.25);
+    }
+
+    /* Two-column layout */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    @media (min-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* Card Panels */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .panel-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      padding-bottom: 10px;
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid #273549;
+      color: var(--text-main);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 10px rgba(250, 204, 21, 0.2);
+    }
+
+    /* Unit Radio Pills */
+    .radio-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .radio-pill {
+      flex: 1;
+      text-align: center;
+      padding: 9px 8px;
+      background: var(--card-bg);
+      border: 1px solid #273549;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .radio-pill.active {
+      background: var(--gold-dim);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* Sliders */
+    .slider-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .slider-val {
+      font-family: monospace;
+      color: var(--gold);
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #273549;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+    }
+
+    /* Voice Bar */
+    .voice-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .voice-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #1e293b;
+      color: var(--text-main);
+      border: 1px solid #334155;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.88rem;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .voice-btn.recording {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+      color: #ef4444;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* Primary CTA Button */
+    .primary-btn {
+      width: 100%;
+      padding: 13px 20px;
+      background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+      color: #0b0f17;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(234, 179, 8, 0.35);
+      transition: all 0.2s ease;
+      margin-top: 10px;
+    }
+
+    .primary-btn:hover {
+      background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+      box-shadow: 0 6px 20px rgba(250, 204, 21, 0.5);
+      transform: translateY(-1px);
+    }
+
+    /* Output Tables & Cards */
+    .table-container {
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    td:last-child {
+      text-align: right;
+      font-family: monospace;
+      font-weight: 600;
+      color: var(--gold);
+    }
+
+    .total-row td {
+      font-size: 1.05rem;
+      color: var(--gold);
+      border-top: 2px solid var(--surface-border);
+      border-bottom: none;
+      padding-top: 14px;
+    }
+
+    /* Advisory Box */
+    .advisory-box {
+      background: #0e1524;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .advisory-box h4 {
+      color: var(--gold);
+      font-size: 0.95rem;
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+
+    .advisory-box h4:first-child {
+      margin-top: 0;
+    }
+
+    .advisory-box p, .advisory-box li {
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .advisory-box ul {
+      padding-left: 20px;
+    }
+
+    .verdict-chip {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-top: 10px;
+    }
+
+    .verdict-favorable {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .verdict-caution {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    /* Collapsible */
+    details {
+      background: #101623;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+    }
+
+    details summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    details[open] summary {
+      margin-bottom: 12px;
+      color: var(--gold);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      margin-top: 36px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--gold);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <gradio-lite>
-import gradio as gr
-import json
+  <div class="container">
+    <!-- Header -->
+    <header class="header-box">
+      <h1>🪙 Gold Investment Estimations Assistant</h1>
+      <p>Voice-enabled precious metals portfolio valuation and asset allocation advisory platform.</p>
+      <div class="badges-row">
+        <span class="badge">🎙️ Voice Speech-to-Text</span>
+        <span class="badge">⚖️ Multi-Karat Valuation</span>
+        <span class="badge">📈 Macro Investment Strategy</span>
+        <span class="badge">🚀 Instant Client-Side Execution</span>
+      </div>
+    </header>
 
-# ============================================================================
-# Precious Metals Valuation Constants & Math Engine
-# ============================================================================
-DEFAULT_GOLD_SPOT_USD = 2750.00
-TROY_OUNCE_TO_GRAMS = 31.1034768
-TOLA_TO_GRAMS = 11.6638038
+    <!-- Main App Grid -->
+    <main class="main-grid">
+      <!-- Input Panel -->
+      <section class="panel">
+        <h2 class="panel-title">⚖️ 1. Holding Parameters</h2>
 
-PURITY_FACTORS = {
-    "24K (99.9% Pure)": 0.999,
-    "22K (91.6% Pure)": 0.916,
-    "18K (75.0% Pure)": 0.750,
-    "14K (58.3% Pure)": 0.583,
-}
+        <!-- Voice or Text Query -->
+        <div class="form-group">
+          <label>Query or Strategy Context</label>
+          <div class="voice-bar">
+            <input type="text" id="userQuery" placeholder="e.g. Should I buy 22K jewelry or 24K bars for long term?" />
+            <button type="button" class="voice-btn" id="micBtn" title="Speak hands-free">
+              🎤 Voice
+            </button>
+          </div>
+        </div>
 
-def calculate_valuation(weight, unit, karat, making_pct, tax_pct, custom_spot):
-    spot = float(custom_spot) if custom_spot and float(custom_spot) > 0 else DEFAULT_GOLD_SPOT_USD
-    w = float(weight or 10.0)
+        <!-- Weight and Unit -->
+        <div class="form-group">
+          <label>Gold Weight</label>
+          <input type="number" id="weight" value="10.0" step="0.1" min="0.01" />
+        </div>
 
-    if unit == "Troy Ounces (oz)":
-        grams = w * TROY_OUNCE_TO_GRAMS
-    elif unit == "Tolas":
-        grams = w * TOLA_TO_GRAMS
-    else:
-        grams = w
+        <div class="form-group">
+          <label>Unit of Measurement</label>
+          <div class="radio-group" id="unitGroup">
+            <div class="radio-pill active" data-unit="Grams (g)">Grams (g)</div>
+            <div class="radio-pill" data-unit="Tolas">Tolas</div>
+            <div class="radio-pill" data-unit="Troy Ounces (oz)">Troy Ounces</div>
+          </div>
+        </div>
 
-    purity = PURITY_FACTORS.get(karat, 0.999)
-    fine_gold_grams = grams * purity
-    base_gram_price_24k = spot / TROY_OUNCE_TO_GRAMS
+        <!-- Karat Purity -->
+        <div class="form-group">
+          <label>Karat Purity Grade</label>
+          <select id="karat">
+            <option value="24K" data-purity="0.999" selected>24K (99.9% Pure Investment Gold)</option>
+            <option value="22K" data-purity="0.916">22K (91.6% Pure Sovereign / Jewelry)</option>
+            <option value="18K" data-purity="0.750">18K (75.0% Fine Jewelry)</option>
+            <option value="14K" data-purity="0.583">14K (58.3% Commercial Alloy)</option>
+          </select>
+        </div>
 
-    metal_value = fine_gold_grams * base_gram_price_24k
-    making_charges = metal_value * (float(making_pct or 0.0) / 100.0)
-    tax_value = (metal_value + making_charges) * (float(tax_pct or 0.0) / 100.0)
-    total_cost = metal_value + making_charges + tax_value
+        <!-- Advanced Pricing Accordion -->
+        <details>
+          <summary>⚙️ Advanced Pricing Adjustments (Charges & Spot)</summary>
+          <div class="form-group" style="margin-top: 12px;">
+            <div class="slider-row">
+              <label>Making / Fabrication Charges (%)</label>
+              <span class="slider-val" id="makingVal">3.0%</span>
+            </div>
+            <input type="range" id="makingSlider" min="0" max="30" step="0.5" value="3.0" />
+          </div>
 
-    return {
-        "spot": spot,
-        "input_weight": w,
-        "unit": unit,
-        "grams": round(grams, 3),
-        "fine_grams": round(fine_gold_grams, 3),
-        "karat": karat,
-        "purity_pct": round(purity * 100, 1),
-        "metal_val": round(metal_value, 2),
-        "making_val": round(making_charges, 2),
-        "tax_val": round(tax_value, 2),
-        "total_cost": round(total_cost, 2),
+          <div class="form-group">
+            <div class="slider-row">
+              <label>Local Sales Tax / VAT (%)</label>
+              <span class="slider-val" id="taxVal">0.0%</span>
+            </div>
+            <input type="range" id="taxSlider" min="0" max="20" step="0.5" value="0.0" />
+          </div>
+
+          <div class="form-group">
+            <label>Spot Price Benchmark ($ / Troy Oz)</label>
+            <input type="number" id="spotPrice" value="2750.00" step="1" />
+          </div>
+        </details>
+
+        <button type="button" class="primary-btn" id="calcBtn">
+          Calculate Valuation & Generate Advisory
+        </button>
+      </section>
+
+      <!-- Output Panel -->
+      <section class="panel">
+        <h2 class="panel-title">📋 2. Valuation & AI Advisory</h2>
+
+        <!-- Active Query Display -->
+        <div class="form-group" id="activeQueryBox" style="display: none;">
+          <label>Active Query</label>
+          <div style="font-size: 0.88rem; color: var(--gold); padding: 8px 12px; background: rgba(250, 204, 21, 0.08); border-radius: 6px; border: 1px solid rgba(250, 204, 21, 0.2);" id="activeQueryText"></div>
+        </div>
+
+        <!-- Table Summary -->
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Valuation Metric</th>
+                <th>Estimated Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Gross Weight</td>
+                <td id="resGrossWeight">10.000 g</td>
+              </tr>
+              <tr>
+                <td>Purity Grade</td>
+                <td id="resKarat">24K (99.9%)</td>
+              </tr>
+              <tr>
+                <td>Fine (Pure) Gold Content</td>
+                <td id="resFineGold">9.990 g</td>
+              </tr>
+              <tr>
+                <td>Spot Price Benchmark</td>
+                <td id="resSpotPrice">$2,750.00 / oz</td>
+              </tr>
+              <tr>
+                <td>Raw Metal Value</td>
+                <td id="resMetalVal">$883.25</td>
+              </tr>
+              <tr>
+                <td>Making / Fabrication Overhead</td>
+                <td id="resMakingVal">$26.50</td>
+              </tr>
+              <tr>
+                <td>Estimated Tax / Duty</td>
+                <td id="resTaxVal">$0.00</td>
+              </tr>
+              <tr class="total-row">
+                <td><strong>Total Estimated Acquisition Cost</strong></td>
+                <td id="resTotalCost"><strong>$909.75 USD</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Advisory Analysis -->
+        <div class="advisory-box" id="advisoryContainer">
+          <!-- Filled dynamically -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      Engineered by <a href="https://github.com/iamjunaidjutt" target="_blank" rel="noopener">Muhammad Junaid (@iamjunaidjutt)</a> •
+      Portfolio: <a href="https://iamjunaidjutt.com" target="_blank" rel="noopener">iamjunaidjutt.com</a>
+    </footer>
+  </div>
+
+  <script>
+    const TROY_OUNCE_TO_GRAMS = 31.1034768;
+    const TOLA_TO_GRAMS = 11.6638038;
+
+    let currentUnit = "Grams (g)";
+
+    // Setup Unit Pills
+    const unitPills = document.querySelectorAll("#unitGroup .radio-pill");
+    unitPills.forEach(pill => {
+      pill.addEventListener("click", () => {
+        unitPills.forEach(p => p.classList.remove("active"));
+        pill.classList.add("active");
+        currentUnit = pill.getAttribute("data-unit");
+        calculate();
+      });
+    });
+
+    // Slider Listeners
+    const makingSlider = document.getElementById("makingSlider");
+    const makingVal = document.getElementById("makingVal");
+    makingSlider.addEventListener("input", (e) => {
+      makingVal.textContent = parseFloat(e.target.value).toFixed(1) + "%";
+    });
+
+    const taxSlider = document.getElementById("taxSlider");
+    const taxVal = document.getElementById("taxVal");
+    taxSlider.addEventListener("input", (e) => {
+      taxVal.textContent = parseFloat(e.target.value).toFixed(1) + "%";
+    });
+
+    // Voice Speech-to-Text
+    const micBtn = document.getElementById("micBtn");
+    const userQueryInput = document.getElementById("userQuery");
+    let recognition = null;
+
+    if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
+
+      recognition.onstart = () => {
+        micBtn.classList.add("recording");
+        micBtn.innerHTML = "🔴 Listening...";
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        userQueryInput.value = transcript;
+        calculate();
+      };
+
+      recognition.onerror = () => {
+        micBtn.classList.remove("recording");
+        micBtn.innerHTML = "🎤 Voice";
+      };
+
+      recognition.onend = () => {
+        micBtn.classList.remove("recording");
+        micBtn.innerHTML = "🎤 Voice";
+      };
+
+      micBtn.addEventListener("click", () => {
+        try {
+          recognition.start();
+        } catch (e) {
+          recognition.stop();
+        }
+      });
+    } else {
+      micBtn.style.display = "none";
     }
 
-def generate_advisory(val, user_q):
-    total_premium_pct = ((val["making_val"] + val["tax_val"]) / val["metal_val"] * 100) if val["metal_val"] > 0 else 0
+    // Core Valuation Math
+    function calculate() {
+      const rawWeight = parseFloat(document.getElementById("weight").value) || 10.0;
+      const spot = parseFloat(document.getElementById("spotPrice").value) || 2750.00;
+      const makingPct = parseFloat(makingSlider.value) || 0.0;
+      const taxPct = parseFloat(taxSlider.value) || 0.0;
 
-    # Premium analysis
-    if total_premium_pct < 8:
-        premium_eval = f"**Favorable ({total_premium_pct:.1f}% total premium)**: Excellent for investment bullion / minted bars. Low fabrication drag on capital."
-    elif total_premium_pct <= 16:
-        premium_eval = f"**Moderate ({total_premium_pct:.1f}% total premium)**: Typical for lightweight coins, branded sovereign bars, or simple ornaments."
-    else:
-        premium_eval = f"**High ({total_premium_pct:.1f}% total premium)**: Standard for handcrafted jewelry, but suboptimal for pure wealth preservation due to upfront fabrication loss upon liquidation."
+      const karatSelect = document.getElementById("karat");
+      const selectedOption = karatSelect.options[karatSelect.selectedIndex];
+      const purity = parseFloat(selectedOption.getAttribute("data-purity")) || 0.999;
+      const karatLabel = selectedOption.text.split(" ")[0];
 
-    # Strategy advice
-    if "24K" in val["karat"]:
-        strategy = "- **Bullion Recommendation:** 24K pure gold is universally recognized with the tightest bid-ask spread (typically 1–3% at bullion dealers). Ideal for long-term inflation hedging and central bank reserves style holding."
-    elif "22K" in val["karat"]:
-        strategy = "- **Jewelry & Sovereign Coin Hedge:** 22K offers high purity with increased durability for wearable wealth. In South Asian and Middle Eastern markets, 22K retains high liquidity, though jewelers deduct making charges upon buyback."
-    else:
-        strategy = "- **Ornamental Grade:** 18K/14K gold contains higher alloy content (copper/silver/zinc) for hardness. Liquidating these grades incurs a refinery refining fee and larger resale haircut."
+      // Weight conversion to grams
+      let grams = rawWeight;
+      if (currentUnit === "Troy Ounces (oz)") {
+        grams = rawWeight * TROY_OUNCE_TO_GRAMS;
+      } else if (currentUnit === "Tolas") {
+        grams = rawWeight * TOLA_TO_GRAMS;
+      }
 
-    query_note = f"\n> **User Query Focus:** *\"{user_q}\"*\n" if user_q.strip() else ""
+      const fineGrams = grams * purity;
+      const baseGramPrice24k = spot / TROY_OUNCE_TO_GRAMS;
 
-    advisory_md = f"""### 📊 Investment Assessment & Market Analysis
-{query_note}
-#### 1. Premium & Markup Assessment
-- {premium_eval}
-- **Raw Metal Net Worth:** `${val['metal_val']:,.2f}` | **Premium Overhead:** `${val['making_val'] + val['tax_val']:,.2f}`
+      const metalValue = fineGrams * baseGramPrice24k;
+      const makingCharges = metalValue * (makingPct / 100.0);
+      const taxValue = (metalValue + makingCharges) * (taxPct / 100.0);
+      const totalCost = metalValue + makingCharges + taxValue;
+      const totalPremiumPct = metalValue > 0 ? ((makingCharges + taxValue) / metalValue * 100) : 0;
 
-#### 2. Allocation & Liquidity Strategy
-{strategy}
-- **Physical Bullion vs Paper Gold:** If physical possession is required, allocate toward 1 oz or 100g minted bars with serial certificates. For trading/hedging without storage risk, gold ETFs (like GLD or IAU) offer lower expense ratios (0.25% - 0.40%/year) without making charge loss.
-- **Liquidity Expectation:** Expected liquidation recovery is approximately **${val['metal_val']:,.2f} USD** based on spot benchmarks, as secondary markets do not reimburse making charges or retail taxes.
+      // Update Table UI
+      document.getElementById("resGrossWeight").textContent = `${grams.toFixed(3)} g (${rawWeight} ${currentUnit})`;
+      document.getElementById("resKarat").textContent = `${karatLabel} (${(purity * 100).toFixed(1)}% pure)`;
+      document.getElementById("resFineGold").textContent = `${fineGrams.toFixed(3)} g`;
+      document.getElementById("resSpotPrice").textContent = `$${spot.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} / oz`;
+      document.getElementById("resMetalVal").textContent = `$${metalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      document.getElementById("resMakingVal").textContent = `$${makingCharges.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      document.getElementById("resTaxVal").textContent = `$${taxValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      document.getElementById("resTotalCost").textContent = `$${totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
 
-#### 3. Actionable Verdict
-{"✅ **Favorable Buy:** Premium structure aligns well with institutional precious metal guidelines." if total_premium_pct <= 12 else "⚠️ **Caution on Premium:** Negotiate fabrication charges down or shift toward raw investment bars if your primary objective is wealth preservation."}
-"""
-    return advisory_md
+      // Update Query Display
+      const userQ = userQueryInput.value.trim();
+      const activeBox = document.getElementById("activeQueryBox");
+      const activeText = document.getElementById("activeQueryText");
+      if (userQ) {
+        activeBox.style.display = "block";
+        activeText.textContent = `"${userQ}"`;
+      } else {
+        activeBox.style.display = "none";
+      }
 
-def process_calculator(user_q, weight, unit, karat, making_pct, tax_pct, custom_spot):
-    val = calculate_valuation(weight, unit, karat, making_pct, tax_pct, custom_spot)
+      // Generate Investment Advisory
+      generateAdvisory(metalValue, makingCharges, taxValue, totalCost, totalPremiumPct, karatLabel, purity, fineGrams, userQ);
+    }
 
-    summary_md = f"""### 💰 Valuation Breakdown
-| Metric | Value |
-| :--- | :--- |
-| **Gross Weight** | **{val['grams']} g** ({val['input_weight']} {val['unit']}) |
-| **Purity Grade** | **{val['karat']}** ({val['purity_pct']}% fine gold) |
-| **Pure Gold Content** | **{val['fine_grams']} g** |
-| **Spot Benchmark** | **${val['spot']:,.2f} / troy oz** |
-| **Raw Metal Value** | **${val['metal_val']:,.2f}** |
-| **Making / Fabrication** | **${val['making_val']:,.2f}** |
-| **Estimated Tax / Duty** | **${val['tax_val']:,.2f}** |
-| **Total Estimated Price** | **${val['total_cost']:,.2f} USD** |
-"""
-    advisory_md = generate_advisory(val, user_q or "")
-    return summary_md, advisory_md
+    function generateAdvisory(metalVal, makingVal, taxVal, totalCost, premiumPct, karat, purity, fineGrams, query) {
+      let premiumAnalysis = "";
+      let verdictClass = "verdict-favorable";
+      let verdictText = "✅ Favorable Investment Structure: Low premium overhead.";
 
-# ============================================================================
-# UI Setup (Gradio-Lite Compatible)
-# ============================================================================
-CUSTOM_CSS = """
-.gradio-container {
-    max-width: 1050px !important;
-    margin: 0 auto !important;
-}
-.header-box {
-    text-align: center;
-    padding: 20px 14px;
-    background: linear-gradient(135deg, #0b0f17 0%, #171f2f 100%);
-    border-radius: 12px;
-    border: 1px solid rgba(234, 179, 8, 0.35);
-    margin-bottom: 20px;
-}
-.header-box h1 {
-    color: #facc15;
-    margin: 0 0 6px 0;
-    font-size: 1.75rem;
-}
-"""
+      if (premiumPct < 8) {
+        premiumAnalysis = `<strong>Favorable (${premiumPct.toFixed(1)}% total premium):</strong> Excellent for institutional investment bars or minted bullion. Low fabrication drag preserves capital.`;
+      } else if (premiumPct <= 16) {
+        premiumAnalysis = `<strong>Moderate (${premiumPct.toFixed(1)}% total premium):</strong> Typical for lightweight coins, branded sovereign bars, or simple ornaments.`;
+        verdictClass = "verdict-favorable";
+        verdictText = "⚡ Balanced Asset Profile: Standard retail acquisition spread.";
+      } else {
+        premiumAnalysis = `<strong>High (${premiumPct.toFixed(1)}% total premium):</strong> Typical for handcrafted jewelry. Significant upfront fabrication loss upon liquidation.`;
+        verdictClass = "verdict-caution";
+        verdictText = "⚠️ Premium Caution: Negotiate fabrication charges down or shift to bullion bars for wealth preservation.";
+      }
 
-with gr.Blocks(title="Gold Investment Estimations Assistant", css=CUSTOM_CSS) as demo:
-    with gr.Column(elem_classes=["header-box"]):
-        gr.Markdown(
-            """# 🪙 Gold Investment Estimations Assistant
-**Precious Metals Portfolio & Valuation Advisor**
-Powered by **Gradio-Lite (Client-Side Pyodide)** • Instant browser-native valuation calculations
-"""
-        )
+      let karatStrategy = "";
+      if (karat === "24K") {
+        karatStrategy = "<strong>24K Pure Bullion:</strong> Universally recognized with the lowest bid-ask spread (1–3% at bullion dealers). Ideal vehicle for central-bank style long-term inflation hedging.";
+      } else if (karat === "22K") {
+        karatStrategy = "<strong>22K High-Purity:</strong> High liquidity across South Asian and Middle Eastern markets with added physical durability. Buyback jewelers deduct fabrication upon resale.";
+      } else {
+        karatStrategy = "<strong>18K / 14K Ornamental:</strong> Higher alloy composition. Resale incurs melting and refinery deduction fees.";
+      }
 
-    with gr.Row():
-        with gr.Column(scale=1):
-            gr.Markdown("### ⚖️ 1. Holding Parameters")
-            weight_in = gr.Number(value=10.0, label="Weight", precision=2)
-            unit_in = gr.Radio(
-                choices=["Grams (g)", "Tolas", "Troy Ounces (oz)"],
-                value="Grams (g)",
-                label="Unit of Measurement",
-            )
-            karat_in = gr.Dropdown(
-                choices=list(PURITY_FACTORS.keys()),
-                value="24K (99.9% Pure)",
-                label="Karat / Purity Grade",
-            )
+      const advisoryContainer = document.getElementById("advisoryContainer");
+      advisoryContainer.innerHTML = `
+        <h4>1. Premium & Markup Assessment</h4>
+        <p>${premiumAnalysis}</p>
+        <p><strong>Net Melt Worth:</strong> $${metalVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} | <strong>Premium Overhead:</strong> $${(makingVal + taxVal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
 
-            with gr.Accordion("Advanced Pricing Adjustments", open=False):
-                making_in = gr.Slider(
-                    minimum=0, maximum=30, value=3.0, step=0.5,
-                    label="Making / Fabrication Charges (%)",
-                )
-                tax_in = gr.Slider(
-                    minimum=0, maximum=20, value=0.0, step=0.5,
-                    label="Local Sales Tax / VAT (%)",
-                )
-                spot_in = gr.Number(
-                    value=DEFAULT_GOLD_SPOT_USD,
-                    label="Custom Spot Price ($/oz)",
-                )
+        <h4>2. Strategy & Allocation Breakdown</h4>
+        <ul>
+          <li>${karatStrategy}</li>
+          <li><strong>Bullion vs Paper Gold (ETFs):</strong> For physical safety, prioritize 1 oz / 100g serialized minted bars. For liquid trading without storage cost, low-expense ETFs (e.g. GLD/IAU) avoid making charge haircuts.</li>
+          <li><strong>Liquidity Spread:</strong> Expected liquidation value upon immediate resale is approximately <strong>$${metalVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD</strong>, as secondary bullion markets do not refund fabrication or VAT.</li>
+        </ul>
 
-            query_in = gr.Textbox(
-                label="Investment Question or Custom Context",
-                placeholder="e.g. Evaluating 22K jewelry vs 24K bars for 5-year hedge",
-                lines=2,
-            )
-            calc_btn = gr.Button("Calculate Valuation & Advisory", variant="primary")
+        <div class="verdict-chip ${verdictClass}">
+          ${verdictText}
+        </div>
+      `;
+    }
 
-        with gr.Column(scale=1):
-            gr.Markdown("### 📋 2. Results & Advisory")
-            summary_out = gr.Markdown()
-            advisory_out = gr.Markdown()
+    // Attach Calculate button and input listeners
+    document.getElementById("calcBtn").addEventListener("click", calculate);
+    document.getElementById("weight").addEventListener("input", calculate);
+    document.getElementById("spotPrice").addEventListener("input", calculate);
+    document.getElementById("karat").addEventListener("change", calculate);
+    makingSlider.addEventListener("change", calculate);
+    taxSlider.addEventListener("change", calculate);
 
-    calc_btn.click(
-        fn=process_calculator,
-        inputs=[query_in, weight_in, unit_in, karat_in, making_in, tax_in, spot_in],
-        outputs=[summary_out, advisory_out],
-    )
-
-    gr.Markdown(
-        """---
-*Engineered by **Muhammad Junaid** ([@iamjunaidjutt](https://github.com/iamjunaidjutt)) • Deployed on Hugging Face Spaces & GitHub.*
-"""
-    )
-  </gradio-lite>
+    // Initial calculation on load
+    calculate();
+  </script>
 </body>
 </html>
