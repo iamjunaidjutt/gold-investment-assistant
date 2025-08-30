@@ -1,14 +1,3 @@
----
-title: Gold Investment Estimations Assistant
-emoji: 🪙
-colorFrom: yellow
-colorTo: yellow
-sdk: static
-pinned: false
-license: mit
-short_description: Gold portfolio and investment valuation advisor
----
-
 # Gold Investment Estimations Assistant
 
 A voice-enabled gold valuation and portfolio investment advisor built with the **OpenAI API Client**, **Groq Whisper (`whisper-large-v3`)**, and **Gradio**, deployed on **Hugging Face Spaces**.
