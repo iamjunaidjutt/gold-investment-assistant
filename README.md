@@ -104,6 +104,7 @@ Open your browser at `http://localhost:7860` to use the assistant.
 ## Hugging Face Spaces Deployment
 
 - **Live Space URL:** [huggingface.co/spaces/junaid48/gold-investment-assistant](https://huggingface.co/spaces/junaid48/gold-investment-assistant)
+- **Technical Case Study:** [iamjunaidjutt.vercel.app/gold-investment-system](https://iamjunaidjutt.vercel.app/gold-investment-system)
 - **GitHub Repository:** [github.com/iamjunaidjutt/gold-investment-assistant](https://github.com/iamjunaidjutt/gold-investment-assistant)
 
 1. Create a new Space on [Hugging Face](https://huggingface.co/new-space) under `junaid48`.
